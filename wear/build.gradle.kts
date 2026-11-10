@@ -12,7 +12,7 @@ android {
         applicationId = "com.japanesewalking.app"
         minSdk = 28
         targetSdk = 36
-        versionCode = 10
+        versionCode = 12
         versionName = "1.0.6"
     }
 

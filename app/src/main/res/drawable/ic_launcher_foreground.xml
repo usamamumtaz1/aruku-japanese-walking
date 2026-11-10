@@ -1,0 +1,49 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Red Hinomaru Circle Emblem -->
+    <path
+        android:fillColor="#D32F2F"
+        android:pathData="M54,16 A38,38 0 1,1 53.99,16 Z" />
+
+    <!-- Japanese '歩' (Kanji for Walk/Step) in Crisp White -->
+    <!-- Top vertical -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M43,26 h4.5 v14 h-4.5 z" />
+    <!-- Upper right horizontal -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M46.5,32 h10 v3.8 h-10 z" />
+    <!-- Left vertical -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M31,29 h4.2 v13 h-4.2 z" />
+    <!-- Horizontal beam -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M23,43.5 h39 v4.2 h-39 z" />
+    <!-- Lower center trunk with subtle hook -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M43,47.7 h4.5 v22 c0,3 -1.8,4.5 -4.8,4.5 c-1.5,0 -3.2,-0.5 -4.8,-1.2 l1.2,-3.8 c0.9,0.4 2,0.8 2.8,0.8 c1.4,0 1.1,-1 1.1,-2.3 z" />
+    <!-- Lower left stroke -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M35,53 c-1.2,4.5 -4,10.5 -8.5,15 l-3,-3.2 c4,-4 6.2,-8.5 7.2,-12.8 z" />
+    <!-- Lower right stroke -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M53,52 c2.2,4 5.5,8.8 10,12.5 l-3.2,3.4 c-4,-3.8 -7.2,-8.5 -9.5,-12.5 z" />
+
+    <!-- Japanese 'く' (Hiragana ku) in Crisp White -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M76,43 L67,54 L76,65" />
+</vector>

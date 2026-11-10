@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Japanese Walking</string>
+    <string name="tagline">Interval Walking Training (IWT)</string>
+    <string name="fast_interval_label">Fast Walk (Brisk)</string>
+    <string name="normal_interval_label">Moderate Walk (Normal)</string>
+    <string name="start_workout">Start Walking</string>
+    <string name="pause_workout">Pause</string>
+    <string name="resume_workout">Resume</string>
+    <string name="finish_workout">Finish Walk</string>
+    <string name="notification_channel_name">Walking Workout Tracker</string>
+    <string name="notification_channel_desc">Shows ongoing Japanese walking interval status and audio coach notifications</string>
+    <string name="widget_name">Japanese Walking (Quick Start)</string>
+    <string name="widget_description">One-tap 30-min Japanese Interval Walk and live interval monitor</string>
+    <string name="widget_start_walk">START WALK</string>
+    <string name="widget_standard_title">Standard IWT (30m)</string>
+    <string name="widget_standard_desc">3m Fast • 3m Moderate</string>
+</resources>

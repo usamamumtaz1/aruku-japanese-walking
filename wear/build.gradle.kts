@@ -12,8 +12,8 @@ android {
         applicationId = "com.japanesewalking.app"
         minSdk = 28
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.0.5"
+        versionCode = 10
+        versionName = "1.0.6"
     }
 
     signingConfigs {

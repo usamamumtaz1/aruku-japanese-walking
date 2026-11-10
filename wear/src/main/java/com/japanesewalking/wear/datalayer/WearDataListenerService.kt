@@ -136,7 +136,6 @@ class WearDataListenerService : WearableListenerService() {
                 .setCategory(NotificationCompat.CATEGORY_WORKOUT)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setContentIntent(pendingIntent)
-                .setFullScreenIntent(pendingIntent, true)
                 .build()
 
             notificationManager.notify(NOTIFICATION_ID, notification)

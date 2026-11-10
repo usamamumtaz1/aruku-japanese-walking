@@ -78,6 +78,7 @@ class WorkoutForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        loadSettingsFromPrefs()
         audioCoach = AudioCoachManager(this)
         vibrationManager = VibrationManager(this)
         locationTracker = LocationTracker(this)
@@ -95,11 +96,39 @@ class WorkoutForegroundService : Service() {
         }
     }
 
+    private fun loadSettingsFromPrefs() {
+        try {
+            val prefs = getSharedPreferences("japanese_walking_prefs", Context.MODE_PRIVATE)
+            settings = settings.copy(
+                fastIntervalSeconds = prefs.getInt("key_fast_interval_sec", settings.fastIntervalSeconds),
+                normalIntervalSeconds = prefs.getInt("key_normal_interval_sec", settings.normalIntervalSeconds),
+                isVoiceEnabled = prefs.getBoolean("key_voice_enabled", settings.isVoiceEnabled),
+                isChimeEnabled = prefs.getBoolean("key_chime_enabled", settings.isChimeEnabled),
+                isVibrationEnabled = prefs.getBoolean("key_vibration_enabled", settings.isVibrationEnabled),
+                audioDuckingEnabled = prefs.getBoolean("key_audio_ducking", settings.audioDuckingEnabled),
+                periodicDistanceUpdates = prefs.getBoolean("key_periodic_distance", settings.periodicDistanceUpdates),
+                periodicDistanceIntervalMeters = prefs.getFloat("key_periodic_distance_meters", settings.periodicDistanceIntervalMeters.toFloat()).toDouble()
+            )
+        } catch (e: Exception) {
+            Log.w("WorkoutService", "Failed loading settings from prefs", e)
+        }
+    }
+
+    private fun speakAnnouncement(text: String, playChimeBefore: Boolean = true) {
+        if (!settings.isVoiceEnabled) return
+        audioCoach.speak(
+            text = text,
+            playChimeBefore = playChimeBefore && settings.isChimeEnabled,
+            useDucking = settings.audioDuckingEnabled
+        )
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
-                val fastSec = intent.getIntExtra(EXTRA_FAST_SEC, 180)
-                val normalSec = intent.getIntExtra(EXTRA_NORMAL_SEC, 180)
+                loadSettingsFromPrefs()
+                val fastSec = intent.getIntExtra(EXTRA_FAST_SEC, settings.fastIntervalSeconds)
+                val normalSec = intent.getIntExtra(EXTRA_NORMAL_SEC, settings.normalIntervalSeconds)
                 val goalTypeName = intent.getStringExtra(EXTRA_GOAL_TYPE) ?: GoalType.TIME_BOUND.name
                 val goalTargetSec = intent.getIntExtra(EXTRA_TARGET_SEC, 30 * 60)
                 val goalTargetMeters = intent.getDoubleExtra(EXTRA_TARGET_METERS, 3000.0)
@@ -175,9 +204,7 @@ class WorkoutForegroundService : Service() {
         if (settings.isVibrationEnabled) {
             vibrationManager.vibrateFastInterval()
         }
-        if (settings.isVoiceEnabled) {
-            audioCoach.speak("Starting Japanese Interval Walking. Fast walk interval starts now. Speed up your pace!")
-        }
+        speakAnnouncement("Starting Japanese Interval Walking. Fast walk interval starts now. Speed up your pace!")
 
         startTicker()
         silentAudioKeeper.start()
@@ -354,9 +381,7 @@ class WorkoutForegroundService : Service() {
                 hasAnnouncedCountdown = false
 
                 if (settings.isVibrationEnabled) vibrationManager.vibrateNormalInterval()
-                if (settings.isVoiceEnabled) {
-                    audioCoach.speak("Fast interval complete! Slow down to a moderate recovery pace.")
-                }
+                speakAnnouncement("Fast interval complete! Slow down to a moderate recovery pace.")
                 scheduleNextMilestoneAlarm()
             } else {
                 // Transition: NORMAL -> FAST (Completed 1 full set!)
@@ -370,9 +395,7 @@ class WorkoutForegroundService : Service() {
                 hasAnnouncedCountdown = false
 
                 if (settings.isVibrationEnabled) vibrationManager.vibrateFastInterval()
-                if (settings.isVoiceEnabled) {
-                    audioCoach.speak("Set $completedSets completed! Speed up to brisk pace.")
-                }
+                speakAnnouncement("Set $completedSets completed! Speed up to brisk pace.")
                 scheduleNextMilestoneAlarm()
             }
         } else {
@@ -385,9 +408,7 @@ class WorkoutForegroundService : Service() {
                 scheduleNextMilestoneAlarm()
             } else if (!hasAnnouncedCountdown && intervalRemaining in 1..5) {
                 hasAnnouncedCountdown = true
-                if (settings.isVoiceEnabled) {
-                    audioCoach.speak("Change pace in 5 seconds", playChimeBefore = false)
-                }
+                speakAnnouncement("Change pace in 5 seconds", playChimeBefore = false)
                 scheduleNextMilestoneAlarm()
             }
         }
@@ -435,9 +456,7 @@ class WorkoutForegroundService : Service() {
             if (reachedByTime || reachedByDist) {
                 isGoalReached = true
                 if (settings.isVibrationEnabled) vibrationManager.vibrateGoalCompleted()
-                if (settings.isVoiceEnabled) {
-                    audioCoach.speak("Target goal achieved! Fantastic work. You can finish or continue your walk.")
-                }
+                speakAnnouncement("Target goal achieved! Fantastic work. You can finish or continue your walk.")
             }
         }
 
@@ -462,7 +481,6 @@ class WorkoutForegroundService : Service() {
     }
 
     private fun announceHalfTime(halfTimeSec: Int, intervalType: IntervalType) {
-        if (!settings.isVoiceEnabled) return
         val durationText = formatDurationSpoken(halfTimeSec)
         val encouragement = if (intervalType == IntervalType.FAST) {
             "Keep up the brisk pace!"
@@ -470,7 +488,7 @@ class WorkoutForegroundService : Service() {
             "Maintain your recovery pace."
         }
         val announcement = "Halfway mark: $durationText passed, $durationText to go. $encouragement"
-        audioCoach.speak(announcement, playChimeBefore = true)
+        speakAnnouncement(announcement, playChimeBefore = true)
     }
 
     private fun formatDurationSpoken(seconds: Int): String {
@@ -496,14 +514,14 @@ class WorkoutForegroundService : Service() {
         _state.value = curr.copy(distanceMeters = distanceMeters)
 
         // Periodic km announcement (e.g. 1 km, 2 km)
-        if (settings.periodicDistanceUpdates && settings.isVoiceEnabled) {
+        if (settings.periodicDistanceUpdates) {
             val currentKm = (distanceMeters / 1000.0).toInt()
             if (currentKm > lastAnnouncedKm && currentKm > 0) {
                 lastAnnouncedKm = currentKm
                 val paceMinKm = if (distanceMeters > 0) {
                     ((curr.totalElapsedSeconds / 60.0) / (distanceMeters / 1000.0)).toInt()
                 } else 0
-                audioCoach.speak("$currentKm kilometer completed. Average pace: $paceMinKm minutes per kilometer.")
+                speakAnnouncement("$currentKm kilometer completed. Average pace: $paceMinKm minutes per kilometer.")
             }
         }
     }
@@ -528,9 +546,7 @@ class WorkoutForegroundService : Service() {
         } catch (e: Exception) {
             Log.e("WorkoutService", "Failed updating widget on pause", e)
         }
-        if (settings.isVoiceEnabled) {
-            audioCoach.speak("Workout paused.")
-        }
+        speakAnnouncement("Workout paused.")
     }
 
     private fun resumeWorkoutSession() {
@@ -556,9 +572,7 @@ class WorkoutForegroundService : Service() {
         } catch (e: Exception) {
             Log.e("WorkoutService", "Failed updating widget on resume", e)
         }
-        if (settings.isVoiceEnabled) {
-            audioCoach.speak("Resuming Japanese walking. Pick up where you left off.")
-        }
+        speakAnnouncement("Resuming Japanese walking. Pick up where you left off.")
     }
 
     fun skipInterval() {
@@ -592,9 +606,7 @@ class WorkoutForegroundService : Service() {
         val s = _state.value
         _state.value = s.copy(status = SessionStatus.COMPLETED)
 
-        if (settings.isVoiceEnabled) {
-            audioCoach.speak("Workout complete! Great job completing your Japanese walking session.")
-        }
+        speakAnnouncement("Workout complete! Great job completing your Japanese walking session.")
 
         val sessionRecord = WorkoutSession(
             durationSeconds = s.totalElapsedSeconds,

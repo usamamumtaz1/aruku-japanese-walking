@@ -22,7 +22,7 @@ class AudioCoachManager(private val context: Context) : TextToSpeech.OnInitListe
     init {
         tts = TextToSpeech(context, this)
         try {
-            toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 80)
+            toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
         } catch (e: Exception) {
             Log.w(TAG, "ToneGenerator init failed", e)
         }
@@ -37,9 +37,9 @@ class AudioCoachManager(private val context: Context) : TextToSpeech.OnInitListe
             tts?.setSpeechRate(1.0f)
             tts?.setPitch(1.0f)
 
-            // Configure audio attributes for navigation guidance to route cleanly over Bluetooth & duck media
+            // Configure audio attributes for media stream so Bluetooth headphones play at full music volume
             val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+                .setUsage(AudioAttributes.USAGE_MEDIA)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                 .build()
             tts?.setAudioAttributes(audioAttributes)
@@ -75,9 +75,14 @@ class AudioCoachManager(private val context: Context) : TextToSpeech.OnInitListe
 
         try {
             requestAudioFocus(useDucking)
-            val params = android.os.Bundle()
-            params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "japanese_walk_${System.currentTimeMillis()}")
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, "japanese_walk_${System.currentTimeMillis()}")
+            val utteranceId = "japanese_walk_${System.currentTimeMillis()}"
+            val params = android.os.Bundle().apply {
+                putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId)
+                // Set TTS output volume to 100% of the media stream
+                putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
+                putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC)
+            }
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
         } catch (e: Exception) {
             Log.w(TAG, "TTS speak failed", e)
         }
@@ -93,6 +98,8 @@ class AudioCoachManager(private val context: Context) : TextToSpeech.OnInitListe
     }
 
     private fun requestAudioFocus(useDucking: Boolean) {
+        // When ducking is enabled, lower background audio volume.
+        // When ducking is disabled by user, completely pause background audio so speech is crystal clear.
         val focusGain = if (useDucking) {
             AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
         } else {
@@ -101,7 +108,7 @@ class AudioCoachManager(private val context: Context) : TextToSpeech.OnInitListe
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val playbackAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+                .setUsage(AudioAttributes.USAGE_MEDIA)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                 .build()
 

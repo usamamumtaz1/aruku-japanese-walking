@@ -86,6 +86,12 @@ object WearWorkoutManager {
     fun stopWorkout(context: Context) {
         timerJob?.cancel()
         _workoutState.value = WearWorkoutState(status = "IDLE")
+        try {
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            nm.cancel(1001)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed cancelling workout notification", e)
+        }
         WearCommandSender.sendCommand(context, "STOP")
     }
 

@@ -40,6 +40,16 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         private const val KEY_PROMO_CODE = "key_promo_code"
         private const val KEY_DARK_THEME = "key_dark_theme"
 
+        // Setting keys
+        const val KEY_FAST_INTERVAL_SEC = "key_fast_interval_sec"
+        const val KEY_NORMAL_INTERVAL_SEC = "key_normal_interval_sec"
+        const val KEY_VOICE_ENABLED = "key_voice_enabled"
+        const val KEY_CHIME_ENABLED = "key_chime_enabled"
+        const val KEY_VIBRATION_ENABLED = "key_vibration_enabled"
+        const val KEY_AUDIO_DUCKING = "key_audio_ducking"
+        const val KEY_PERIODIC_DISTANCE = "key_periodic_distance"
+        const val KEY_PERIODIC_DISTANCE_METERS = "key_periodic_distance_meters"
+
         val VALID_PROMO_CODES = listOf(
             "EARLYBIRD",
             "LAUNCHVIP",
@@ -115,8 +125,19 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     val totalDistanceMeters: StateFlow<Double?> = repository.totalDistanceMeters
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    // User Configurable Settings
-    private val _settings = MutableStateFlow(WorkoutSettings())
+    // User Configurable Settings with persistent SharedPreferences backing
+    private val _settings = MutableStateFlow(
+        WorkoutSettings(
+            fastIntervalSeconds = prefs.getInt(KEY_FAST_INTERVAL_SEC, 180),
+            normalIntervalSeconds = prefs.getInt(KEY_NORMAL_INTERVAL_SEC, 180),
+            isVoiceEnabled = prefs.getBoolean(KEY_VOICE_ENABLED, true),
+            isChimeEnabled = prefs.getBoolean(KEY_CHIME_ENABLED, true),
+            isVibrationEnabled = prefs.getBoolean(KEY_VIBRATION_ENABLED, true),
+            audioDuckingEnabled = prefs.getBoolean(KEY_AUDIO_DUCKING, true),
+            periodicDistanceUpdates = prefs.getBoolean(KEY_PERIODIC_DISTANCE, true),
+            periodicDistanceIntervalMeters = prefs.getFloat(KEY_PERIODIC_DISTANCE_METERS, 1000.0f).toDouble()
+        )
+    )
     val settings: StateFlow<WorkoutSettings> = _settings.asStateFlow()
 
     // Configurable Goal for next workout
@@ -178,6 +199,10 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun updateIntervalDurations(fastSeconds: Int, normalSeconds: Int) {
+        prefs.edit()
+            .putInt(KEY_FAST_INTERVAL_SEC, fastSeconds)
+            .putInt(KEY_NORMAL_INTERVAL_SEC, normalSeconds)
+            .apply()
         _settings.value = _settings.value.copy(
             fastIntervalSeconds = fastSeconds,
             normalIntervalSeconds = normalSeconds
@@ -185,11 +210,28 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun toggleVoiceCoach(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_VOICE_ENABLED, enabled).apply()
         _settings.value = _settings.value.copy(isVoiceEnabled = enabled)
     }
 
+    fun toggleChime(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_CHIME_ENABLED, enabled).apply()
+        _settings.value = _settings.value.copy(isChimeEnabled = enabled)
+    }
+
     fun toggleVibration(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_VIBRATION_ENABLED, enabled).apply()
         _settings.value = _settings.value.copy(isVibrationEnabled = enabled)
+    }
+
+    fun toggleAudioDucking(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_AUDIO_DUCKING, enabled).apply()
+        _settings.value = _settings.value.copy(audioDuckingEnabled = enabled)
+    }
+
+    fun togglePeriodicDistance(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_PERIODIC_DISTANCE, enabled).apply()
+        _settings.value = _settings.value.copy(periodicDistanceUpdates = enabled)
     }
 
     fun startWorkout() {

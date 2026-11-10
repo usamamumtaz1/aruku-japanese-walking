@@ -38,9 +38,8 @@ class MainActivity : ComponentActivity() {
 
     private fun checkActivePhoneState() {
         try {
-            Wearable.getDataClient(this).getDataItems(
-                Uri.parse("wear://*/japanese_walking/state")
-            ).addOnSuccessListener { buffer ->
+            // Query all local DataLayer items without URI filter so we reliably catch /japanese_walking/state
+            Wearable.getDataClient(this).dataItems.addOnSuccessListener { buffer ->
                 try {
                     for (item in buffer) {
                         if (item.uri.path == "/japanese_walking/state") {

@@ -303,7 +303,7 @@ fun SettingsScreen(
                         }
                         Switch(
                             checked = settings.audioDuckingEnabled,
-                            onCheckedChange = { /* Default enabled */ }
+                            onCheckedChange = { viewModel.toggleAudioDucking(it) }
                         )
                     }
                 }
